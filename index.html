@@ -48,6 +48,7 @@
             color: #b0b0b0;
         }
 
+
         input, select {
             padding: 12px;
             border: 1px solid #555;
@@ -115,7 +116,7 @@
 
         .countdown {
             font-weight: bold;
-            color: #ff6b6b;
+            transition: color 0.5s ease;
         }
 
         #attackList {
@@ -266,18 +267,38 @@
         function updateCountdowns() {
             const countdownElements = document.querySelectorAll('.countdown');
             const now = new Date();
-
+        
             countdownElements.forEach(element => {
                 const launchTime = new Date(element.dataset.launchTime);
                 const timeDiff = launchTime - now;
-
+        
                 if (timeDiff > 0) {
                     const hours = Math.floor(timeDiff / (1000 * 60 * 60));
                     const minutes = Math.floor((timeDiff % (1000 * 60 * 60)) / (1000 * 60));
                     const seconds = Math.floor((timeDiff % (1000 * 60)) / 1000);
                     element.textContent = `Countdown: ${hours}h ${minutes}m ${seconds}s`;
+        
+                    // Calculate color based on time remaining
+                    const totalMinutes = hours * 60 + minutes;
+                    let color;
+                    if (totalMinutes > 30) {
+                        // Light blue for over 30 minutes
+                        color = '#87CEFA';
+                    } else if (totalMinutes <= 5) {
+                        // Bright red for 5 minutes or less
+                        color = '#FF0000';
+                    } else {
+                        // Gradual change from light blue to dark red
+                        const percentage = (30 - totalMinutes) / 25;
+                        const r = Math.floor(135 + (220 - 135) * percentage);
+                        const g = Math.floor(206 * (1 - percentage));
+                        const b = Math.floor(250 * (1 - percentage));
+                        color = `rgb(${r}, ${g}, ${b})`;
+                    }
+                    element.style.color = color;
                 } else {
                     element.textContent = 'Launch time passed';
+                    element.style.color = '#FF0000'; // Bright red when launch time has passed
                 }
             });
         }
