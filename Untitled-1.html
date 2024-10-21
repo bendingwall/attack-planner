@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tribal Wars 2 Attack Planner</title>
+    <style>
+        body, html {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f2f5;
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            color: #333;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: #fff;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+            overflow-y: auto;
+        }
+
+        h1, h2 {
+            text-align: center;
+            color: #4a4a4a;
+            margin-bottom: 20px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        label {
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #555;
+        }
+
+        input, select {
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: #4CAF50;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            background-color: #4CAF50;
+            border: none;
+            border-radius: 8px;
+            color: #fff;
+            font-size: 18px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            margin-top: 20px;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        ul {
+            list-style-type: none;
+            padding: 0;
+        }
+
+        li {
+            background: #f8f9fa;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .unit-icon {
+            width: 34px;
+            height: 34px;
+            margin-right: 15px;
+            border-radius: 50%;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+
+        .attack-info {
+            flex-grow: 1;
+        }
+
+        .time {
+            font-weight: bold;
+            color: #4CAF50;
+        }
+
+        .countdown {
+            font-weight: bold;
+            color: #ff6b6b;
+        }
+
+        #attackList {
+            max-height: calc(100% - 400px);
+            overflow-y: auto;
+            padding-right: 10px;
+        }
+
+        #attackList::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        #attackList::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+
+        #attackList::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 10px;
+        }
+
+        #attackList::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+    </style>
+    <script>
+        function actualDistance(start, end) {
+            var dy = start.y - end.y,
+                dx = start.x - end.x;
+
+            if (dy % 2) {
+                dx += start.y % 2 ? 0.5 : -0.5;
+            }
+
+            return Math.sqrt(dx * dx + dy * dy * 0.75);
+        }
+
+        function calculateTravelTime(unitType, distance) {
+            const unitSpeeds = {
+                "LC": 8, "HC": 9, "AXE": 14, "SWORD": 18, "RAM": 24, "NOBLE": 35, "TREB": 50
+            };
+
+            const travelTimePerHex = unitSpeeds[unitType];
+            if (!travelTimePerHex) {
+                throw new Error("Invalid unit type");
+            }
+
+            return distance * travelTimePerHex;
+        }
+
+        function parseVillageCoordinates(input) {
+            const [x, y] = input.split('|').map(Number);
+            if (isNaN(x) || isNaN(y)) {
+                throw new Error("Invalid village coordinates");
+            }
+            return { x, y };
+        }
+
+        function formatDateTime(date) {
+            return date.toLocaleString('en-GB', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                hour12: false
+            }).replace(',', '');
+        }
+
+        function addAttack() {
+            const startVillage = parseVillageCoordinates(document.getElementById("startVillage").value);
+            const endVillage = parseVillageCoordinates(document.getElementById("endVillage").value);
+            const unitType = document.getElementById("unitType").value;
+            const landingTime = new Date(document.getElementById("landingTime").value);
+            const startLabel = document.getElementById("startLabel").value;
+            const endLabel = document.getElementById("endLabel").value;
+
+            const distance = actualDistance(startVillage, endVillage);
+            const travelTime = calculateTravelTime(unitType, distance);
+            const launchTime = new Date(landingTime.getTime() - travelTime * 60000);
+
+            const attack = {
+                startVillage,
+                endVillage,
+                unitType,
+                launchTime,
+                landingTime,
+                startLabel,
+                endLabel
+            };
+
+            let attacks = JSON.parse(localStorage.getItem('attacks') || '[]');
+            attacks.push(attack);
+            attacks.sort((a, b) => new Date(a.launchTime) - new Date(b.launchTime));
+            localStorage.setItem('attacks', JSON.stringify(attacks));
+
+            updateAttackList();
+        }
+
+        function updateAttackList() {
+            const attackList = document.getElementById("attackList");
+            attackList.innerHTML = '';
+
+            const attacks = JSON.parse(localStorage.getItem('attacks') || '[]');
+
+            attacks.forEach((attack, index) => {
+                const attackItem = document.createElement("li");
+
+                const unitIcon = document.createElement("img");
+                unitIcon.src = `${attack.unitType.toLowerCase()}.png`;
+                unitIcon.classList.add("unit-icon");
+                unitIcon.alt = attack.unitType;
+
+                const attackInfo = document.createElement("div");
+                attackInfo.classList.add("attack-info");
+                attackInfo.innerHTML = `
+                    From ${attack.startLabel} (${attack.startVillage.x}|${attack.startVillage.y}) to ${attack.endLabel} (${attack.endVillage.x}|${attack.endVillage.y})<br>
+                    <span class="time">Launch: ${formatDateTime(new Date(attack.launchTime))}</span><br>
+                    Landing: ${formatDateTime(new Date(attack.landingTime))}<br>
+                    <span class="countdown" data-launch-time="${attack.launchTime}"></span>
+                `;
+
+                const deleteButton = document.createElement("button");
+                deleteButton.textContent = "Delete";
+                deleteButton.onclick = () => deleteAttack(index);
+                deleteButton.style.width = "auto";
+                deleteButton.style.padding = "5px 10px";
+                deleteButton.style.fontSize = "14px";
+
+                attackItem.appendChild(unitIcon);
+                attackItem.appendChild(attackInfo);
+                attackItem.appendChild(deleteButton);
+                attackList.appendChild(attackItem);
+            });
+
+            updateCountdowns();
+        }
+
+        function deleteAttack(index) {
+            let attacks = JSON.parse(localStorage.getItem('attacks') || '[]');
+            attacks.splice(index, 1);
+            localStorage.setItem('attacks', JSON.stringify(attacks));
+            updateAttackList();
+        }
+
+        function updateCountdowns() {
+            const countdownElements = document.querySelectorAll('.countdown');
+            const now = new Date();
+
+            countdownElements.forEach(element => {
+                const launchTime = new Date(element.dataset.launchTime);
+                const timeDiff = launchTime - now;
+
+                if (timeDiff > 0) {
+                    const hours = Math.floor(timeDiff / (1000 * 60 * 60));
+                    const minutes = Math.floor((timeDiff % (1000 * 60 * 60)) / (1000 * 60));
+                    const seconds = Math.floor((timeDiff % (1000 * 60)) / 1000);
+                    element.textContent = `Countdown: ${hours}h ${minutes}m ${seconds}s`;
+                } else {
+                    element.textContent = 'Launch time passed';
+                }
+            });
+        }
+
+        window.onload = () => {
+            updateAttackList();
+            setInterval(updateCountdowns, 1000);
+        };
+    </script>
+</head>
+<body>
+    <div class="container">
+        <h1>Tribal Wars 2 Attack Planner</h1>
+        
+        <div class="form-grid">
+            <div class="form-group">
+                <label for="startVillage">Start Village (x|y):</label>
+                <input type="text" id="startVillage" placeholder="519|467">
+            </div>
+            <div class="form-group">
+                <label for="startLabel">Start Village Label:</label>
+                <input type="text" id="startLabel" placeholder="Home Base">
+            </div>
+            <div class="form-group">
+                <label for="endVillage">End Village (x|y):</label>
+                <input type="text" id="endVillage" placeholder="505|483">
+            </div>
+            <div class="form-group">
+                <label for="endLabel">End Village Label:</label>
+                <input type="text" id="endLabel" placeholder="Target">
+            </div>
+            <div class="form-group">
+                <label for="unitType">Unit Type:</label>
+                <select id="unitType">
+                    <option value="LC">Light Cavalry (LC)</option>
+                    <option value="HC">Heavy Cavalry (HC)</option>
+                    <option value="AXE">Axe</option>
+                    <option value="SWORD">Sword</option>
+                    <option value="RAM">Ram</option>
+                    <option value="NOBLE">Noble</option>
+                    <option value="TREB">Trebuchet</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="landingTime">Landing Time:</label>
+                <input type="datetime-local" id="landingTime" step="1">
+            </div>
+        </div>
+
+        <button onclick="addAttack()">Add Attack</button>
+
+        <h2>Attack List:</h2>
+        <ul id="attackList"></ul>
+    </div>
+</body>
+</html>
