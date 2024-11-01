@@ -234,9 +234,11 @@
     </style>
     <script>
         function toggleGlow(index) {
-            const movementListItems = document.querySelectorAll('#attackList li');
-            const movementItem = movementListItems[index];
-            movementItem.classList.toggle("glowing-border");
+            let movements = JSON.parse(localStorage.getItem('movements') || '[]');
+            // Toggle the isReal property
+            movements[index].isReal = !movements[index].isReal;
+            localStorage.setItem('movements', JSON.stringify(movements));
+            updateMovementList();
         }
 
         function actualDistance(start, end) {
@@ -283,7 +285,7 @@
                 second: '2-digit',
                 hour12: false,
                 timeZone: 'UTC'
-            }).replace(',', '');
+            }).replace(',', '') + ' GMT';
         }
 
         function setCurrentDateTime() {
@@ -324,7 +326,8 @@
                         landingTime: landingTimeUTC.toISOString(),
                         startLabel,
                         endLabel,
-                        movementType: type
+                        movementType: type,
+                        isReal: false // Initialize as not real
                     });
                 }
             }
@@ -389,6 +392,11 @@
                 const movementItem = document.createElement("li");
                 movementItem.classList.add(movement.movementType.toLowerCase());
                 
+                // Add glowing border if the movement is marked as real
+                if (movement.isReal) {
+                    movementItem.classList.add("glowing-border");
+                }
+                
                 const unitIconContainer = document.createElement("div");
                 unitIconContainer.style.cssText = "width: 80px;";
                 
@@ -439,9 +447,9 @@
                 
                 const realButton = document.createElement("button");
                 realButton.className = "real-button";
-                realButton.textContent = "Real";
+                realButton.textContent = movement.isReal ? "Fake" : "Real";
                 realButton.style.cssText = "width: 100%; padding: 8px 0; font-size: 14px;";
-                realButton.onclick = () => movementItem.classList.toggle("glowing-border");
+                realButton.onclick = () => toggleGlow(index);
                 
                 const deleteButton = document.createElement("button");
                 deleteButton.textContent = "Delete";
