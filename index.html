@@ -231,6 +231,92 @@
             width: 100%;
         }
 
+               /* New styles for import/export */
+               .import-export-container {
+                display: flex;
+                gap: 10px;
+                margin-top: 20px;
+                margin-bottom: 20px;
+            }
+    
+            .export-button, .import-button {
+                background-color: #2c3e50;
+                color: white;
+                padding: 12px;
+                border: none;
+                border-radius: 8px;
+                cursor: pointer;
+                transition: background-color 0.3s;
+                flex: 1;
+            }
+    
+            .export-button:hover, .import-button:hover {
+                background-color: #34495e;
+            }
+    
+            .modal {
+                display: none;
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background-color: rgba(0, 0, 0, 0.7);
+                z-index: 1000;
+            }
+    
+            .modal-content {
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                background-color: #2d2d2d;
+                padding: 20px;
+                border-radius: 8px;
+                width: 80%;
+                max-width: 600px;
+            }
+    
+            .modal textarea {
+                width: 100%;
+                height: 200px;
+                margin: 10px 0;
+                padding: 10px;
+                background-color: #3d3d3d;
+                color: #e0e0e0;
+                border: 1px solid #555;
+                border-radius: 4px;
+                font-family: monospace;
+            }
+    
+            .modal-buttons {
+                display: flex;
+                gap: 10px;
+                justify-content: flex-end;
+            }
+    
+            .modal-button {
+                padding: 8px 16px;
+                border: none;
+                border-radius: 4px;
+                cursor: pointer;
+                transition: background-color 0.3s;
+            }
+    
+            .modal-button.primary {
+                background-color: #2ecc71;
+                color: white;
+            }
+    
+            .modal-button.secondary {
+                background-color: #7f8c8d;
+                color: white;
+            }
+    
+            .modal-button:hover {
+                opacity: 0.9;
+            }
+
     </style>
     <script>
         function toggleGlow(index) {
@@ -475,6 +561,83 @@
             setInterval(updateCountdowns, 1000);
             setCurrentDateTime();
         };
+
+        
+        function exportAttacks() {
+            const movements = JSON.parse(localStorage.getItem('movements') || '[]');
+            const exportData = JSON.stringify(movements, null, 2);
+            
+            const modal = document.getElementById('exportModal');
+            const textarea = document.getElementById('exportText');
+            textarea.value = exportData;
+            modal.style.display = 'block';
+        }
+
+        function copyExport() {
+            const textarea = document.getElementById('exportText');
+            textarea.select();
+            document.execCommand('copy');
+            
+            const copyButton = document.getElementById('copyButton');
+            const originalText = copyButton.textContent;
+            copyButton.textContent = 'Copied!';
+            setTimeout(() => {
+                copyButton.textContent = originalText;
+            }, 2000);
+        }
+
+        function importAttacks() {
+            const modal = document.getElementById('importModal');
+            modal.style.display = 'block';
+        }
+
+        function processImport() {
+            const textarea = document.getElementById('importText');
+            try {
+                const importedData = JSON.parse(textarea.value);
+                
+                // Validate the imported data structure
+                if (!Array.isArray(importedData)) {
+                    throw new Error('Invalid import format');
+                }
+                
+                // Verify required fields exist in each movement
+                importedData.forEach(movement => {
+                    if (!movement.startVillage || !movement.endVillage || 
+                        !movement.unitType || !movement.launchTime || 
+                        !movement.landingTime || !movement.movementType) {
+                        throw new Error('Invalid movement data structure');
+                    }
+                });
+                
+                // Merge with existing movements
+                let existingMovements = JSON.parse(localStorage.getItem('movements') || '[]');
+                const mergedMovements = [...existingMovements, ...importedData];
+                
+                // Sort by launch time
+                mergedMovements.sort((a, b) => new Date(a.launchTime) - new Date(b.launchTime));
+                
+                // Save and update
+                localStorage.setItem('movements', JSON.stringify(mergedMovements));
+                updateMovementList();
+                
+                closeModal('importModal');
+                document.getElementById('importText').value = '';
+            } catch (error) {
+                alert('Invalid import data. Please check the format and try again.');
+            }
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+        }
+
+        // Add this to your window.onload
+        window.onclick = function(event) {
+            if (event.target.classList.contains('modal')) {
+                event.target.style.display = 'none';
+            }
+        };
     </script>
 </head>
 <body>
@@ -527,6 +690,41 @@
         </div>
 
         <ul id="attackList"></ul>
+
+                <!-- Add Import/Export buttons after the Add Attack/Support buttons -->
+                <div class="import-export-container">
+                    <button class="export-button" onclick="exportAttacks()">Export Attacks</button>
+                    <button class="import-button" onclick="importAttacks()">Import Attacks</button>
+                </div>
+        
+                <ul id="attackList"></ul>
+            </div>
+        
+            <!-- Export Modal -->
+            <div id="exportModal" class="modal">
+                <div class="modal-content">
+                    <h2>Export Attacks</h2>
+                    <p>Copy the text below to share your attacks:</p>
+                    <textarea id="exportText" readonly></textarea>
+                    <div class="modal-buttons">
+                        <button id="copyButton" class="modal-button primary" onclick="copyExport()">Copy to Clipboard</button>
+                        <button class="modal-button secondary" onclick="closeModal('exportModal')">Close</button>
+                    </div>
+                </div>
+            </div>
+        
+            <!-- Import Modal -->
+            <div id="importModal" class="modal">
+                <div class="modal-content">
+                    <h2>Import Attacks</h2>
+                    <p>Paste the exported attack data below:</p>
+                    <textarea id="importText" placeholder="Paste attack data here..."></textarea>
+                    <div class="modal-buttons">
+                        <button class="modal-button primary" onclick="processImport()">Import</button>
+                        <button class="modal-button secondary" onclick="closeModal('importModal')">Cancel</button>
+                    </div>
+                </div>
+            </div>
     </div>
 </body>
 </html>
