@@ -281,39 +281,47 @@
                 hour: '2-digit',
                 minute: '2-digit',
                 second: '2-digit',
-                hour12: false
+                hour12: false,
+                timeZone: 'UTC'
             }).replace(',', '');
         }
 
         function setCurrentDateTime() {
             const now = new Date();
-            const localDateTime = now.toISOString().slice(0, 19);
-            document.getElementById("landingTime").value = localDateTime;
+            const utcString = now.toISOString().slice(0, 19);
+            document.getElementById("landingTime").value = utcString;
         }
 
         function addMovements(type) {
             const startVillages = parseVillageCoordinates(document.getElementById("startVillage").value);
             const endVillages = parseVillageCoordinates(document.getElementById("endVillage").value);
             const unitType = document.getElementById("unitType").value;
-            const landingTime = new Date(document.getElementById("landingTime").value);
+            const landingTimeLocal = new Date(document.getElementById("landingTime").value);
+            const landingTimeUTC = new Date(Date.UTC(
+                landingTimeLocal.getFullYear(),
+                landingTimeLocal.getMonth(),
+                landingTimeLocal.getDate(),
+                landingTimeLocal.getHours(),
+                landingTimeLocal.getMinutes(),
+                landingTimeLocal.getSeconds()
+            ));
             const startLabel = document.getElementById("startLabel").value;
             const endLabel = document.getElementById("endLabel").value;
 
             let newMovements = [];
 
-            // Create all combinations of start and end villages
             for (let startVillage of startVillages) {
                 for (let endVillage of endVillages) {
                     const distance = actualDistance(startVillage, endVillage);
                     const travelTime = calculateTravelTime(unitType, distance);
-                    const launchTime = new Date(landingTime.getTime() - travelTime * 60000);
+                    const launchTimeUTC = new Date(landingTimeUTC.getTime() - travelTime * 60000);
 
                     newMovements.push({
                         startVillage,
                         endVillage,
                         unitType,
-                        launchTime,
-                        landingTime: new Date(landingTime),
+                        launchTime: launchTimeUTC.toISOString(),
+                        landingTime: landingTimeUTC.toISOString(),
                         startLabel,
                         endLabel,
                         movementType: type
@@ -329,25 +337,66 @@
             updateMovementList();
         }
 
+        function updateCountdowns() {
+            const countdownElements = document.querySelectorAll('.countdown');
+            const nowUTC = new Date(Date.now());
+            
+            countdownElements.forEach(element => {
+                const launchTime = new Date(element.dataset.launchTime);
+                const timeDiff = launchTime - nowUTC;
+                
+                if (timeDiff > 0) {
+                    const hours = Math.floor(timeDiff / (1000 * 60 * 60));
+                    const minutes = Math.floor((timeDiff % (1000 * 60 * 60)) / (1000 * 60));
+                    const seconds = Math.floor((timeDiff % (1000 * 60)) / 1000);
+                    element.textContent = `Countdown: ${hours}h ${minutes}m ${seconds}s`;
+                    
+                    const totalMinutes = hours * 60 + minutes;
+                    let color;
+                    if (totalMinutes > 30) {
+                        color = '#87CEFA';
+                    } else if (totalMinutes <= 5) {
+                        color = '#FF0000';
+                    } else {
+                        const percentage = (30 - totalMinutes) / 25;
+                        const r = Math.floor(135 + (220 - 135) * percentage);
+                        const g = Math.floor(206 * (1 - percentage));
+                        const b = Math.floor(250 * (1 - percentage));
+                        color = `rgb(${r}, ${g}, ${b})`;
+                    }
+                    element.style.color = color;
+                } else {
+                    element.textContent = 'Launch time passed';
+                    element.style.color = '#FF0000';
+                }
+            });
+        }
+
+        function deleteMovement(index) {
+            let movements = JSON.parse(localStorage.getItem('movements') || '[]');
+            movements.splice(index, 1);
+            localStorage.setItem('movements', JSON.stringify(movements));
+            updateMovementList();
+        }
+
         function updateMovementList() {
             const movementList = document.getElementById("attackList");
             movementList.innerHTML = '';
-        
+            
             const movements = JSON.parse(localStorage.getItem('movements') || '[]');
-        
+            
             movements.forEach((movement, index) => {
                 const movementItem = document.createElement("li");
                 movementItem.classList.add(movement.movementType.toLowerCase());
-        
-                // Unit icon container with larger size
+                
                 const unitIconContainer = document.createElement("div");
-                unitIconContainer.style.cssText = "width: 80px;"; // Increased width
-        
+                unitIconContainer.style.cssText = "width: 80px;";
+                
                 const unitIcon = document.createElement("img");
                 unitIcon.src = `${movement.unitType.toLowerCase()}.png`;
                 unitIcon.classList.add("unit-icon");
                 unitIcon.alt = movement.unitType;
-        
+                
                 const movementInfo = document.createElement("div");
                 movementInfo.classList.add("attack-info");
                 
@@ -377,8 +426,7 @@
                         <div style="text-align: center;" class="countdown" data-launch-time="${movement.launchTime}"></div>
                     </div>
                 `;
-        
-                // Buttons container with larger size
+                
                 const buttonContainer = document.createElement("div");
                 buttonContainer.style.cssText = `
                     width: 80px;
@@ -388,20 +436,19 @@
                     gap: 8px;
                     justify-content: center;
                 `;
-        
+                
                 const realButton = document.createElement("button");
                 realButton.className = "real-button";
                 realButton.textContent = "Real";
                 realButton.style.cssText = "width: 100%; padding: 8px 0; font-size: 14px;";
                 realButton.onclick = () => movementItem.classList.toggle("glowing-border");
-        
+                
                 const deleteButton = document.createElement("button");
                 deleteButton.textContent = "Delete";
                 deleteButton.className = "delete-button";
                 deleteButton.style.cssText = "width: 100%; padding: 8px 0; font-size: 14px;";
                 deleteButton.onclick = () => deleteMovement(index);
-        
-                // Assemble the components
+                
                 unitIconContainer.appendChild(unitIcon);
                 buttonContainer.appendChild(realButton);
                 buttonContainer.appendChild(deleteButton);
@@ -411,49 +458,8 @@
                 movementItem.appendChild(buttonContainer);
                 movementList.appendChild(movementItem);
             });
-        
+            
             updateCountdowns();
-        }
-        function deleteMovement(index) {
-            let movements = JSON.parse(localStorage.getItem('movements') || '[]');
-            movements.splice(index, 1);
-            localStorage.setItem('movements', JSON.stringify(movements));
-            updateMovementList();
-        }
-
-        function updateCountdowns() {
-            const countdownElements = document.querySelectorAll('.countdown');
-            const now = new Date();
-        
-            countdownElements.forEach(element => {
-                const launchTime = new Date(element.dataset.launchTime);
-                const timeDiff = launchTime - now;
-        
-                if (timeDiff > 0) {
-                    const hours = Math.floor(timeDiff / (1000 * 60 * 60));
-                    const minutes = Math.floor((timeDiff % (1000 * 60 * 60)) / (1000 * 60));
-                    const seconds = Math.floor((timeDiff % (1000 * 60)) / 1000);
-                    element.textContent = `Countdown: ${hours}h ${minutes}m ${seconds}s`;
-        
-                    const totalMinutes = hours * 60 + minutes;
-                    let color;
-                    if (totalMinutes > 30) {
-                        color = '#87CEFA';
-                    } else if (totalMinutes <= 5) {
-                        color = '#FF0000';
-                    } else {
-                        const percentage = (30 - totalMinutes) / 25;
-                        const r = Math.floor(135 + (220 - 135) * percentage);
-                        const g = Math.floor(206 * (1 - percentage));
-                        const b = Math.floor(250 * (1 - percentage));
-                        color = `rgb(${r}, ${g}, ${b})`;
-                    }
-                    element.style.color = color;
-                } else {
-                    element.textContent = 'Launch time passed';
-                    element.style.color = '#FF0000';
-                }
-            });
         }
 
         window.onload = () => {
