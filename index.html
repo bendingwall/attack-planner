@@ -3,8 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tribal Wars 2 Attack Planner</title>
+    <title>Tribal Wars 2 Movement Planner</title>
     <style>
+        /* Previous styles remain the same until the buttons section */
         body, html {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background-color: #1e1e1e;
@@ -18,7 +19,7 @@
             max-width: 800px;
             margin: 0 auto;
             background: #2d2d2d;
-            padding: 30px;
+            padding: 40px;
             border-radius: 15px;
             box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
             overflow-y: auto;
@@ -48,7 +49,6 @@
             color: #b0b0b0;
         }
 
-
         input, select {
             padding: 12px;
             border: 1px solid #555;
@@ -64,20 +64,54 @@
             border-color: #4CAF50;
         }
 
+        .button-container {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
         button {
-            width: 100%;
             padding: 12px;
-            background-color: #4CAF50;
             border: none;
             border-radius: 8px;
             color: #fff;
             font-size: 18px;
             cursor: pointer;
             transition: background-color 0.3s;
-            margin-top: 20px;
         }
 
-        button:hover {
+        .attack-button {
+            background-color: #ff4444;
+            flex: 1;
+        }
+
+        .attack-button:hover {
+            background-color: #ff2222;
+        }
+
+        .support-button {
+            background-color: #4444ff;
+            flex: 1;
+        }
+
+        .support-button:hover {
+            background-color: #2222ff;
+        }
+
+        .time-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .time-button {
+            flex: 1;
+            margin-top: 0;
+            padding: 8px;
+            font-size: 14px;
+            background-color: #4CAF50;
+        }
+
+        .time-button:hover {
             background-color: #45a049;
         }
 
@@ -87,9 +121,8 @@
         }
 
         li {
-            background: #3d3d3d;
-            padding: 15px;
-            margin-bottom: 15px;
+            padding: 8px;
+            margin-bottom: 8px;
             border-radius: 8px;
             display: flex;
             align-items: center;
@@ -97,16 +130,25 @@
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
         }
 
+        li.attack {
+            background: #3d3d3d;
+        }
+
+        li.support {
+            background: #3d3d3d;
+        }
+
         .unit-icon {
             width: 48px;
             height: 48px;
-            margin-right: 15px;
             border-radius: 50%;
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
         }
 
         .attack-info {
-            flex-grow: 1;
+            width: -webkit-fill-available;
+            padding-left: 5px;
+            padding-right: 5px;
         }
 
         .time {
@@ -119,31 +161,84 @@
             transition: color 0.5s ease;
         }
 
+        .delete-button {
+            width: auto;
+            padding: 5px 10px;
+            font-size: 14px;
+            background-color: #ff4444;
+        }
+
+        .delete-button:hover {
+            background-color: #ff2222;
+        }
+
         #attackList {
             max-height: calc(100% - 400px);
             overflow-y: auto;
-            padding-right: 10px;
+            padding: 10px;
         }
 
-        #attackList::-webkit-scrollbar {
-            width: 8px;
+        .movement-type {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-weight: bold;
         }
 
-        #attackList::-webkit-scrollbar-track {
-            background: #2d2d2d;
-            border-radius: 10px;
+        .movement-type.attack {
+            background-color: rgba(255, 68, 68, 0.2);
+            color: #ff4444;
         }
 
-        #attackList::-webkit-scrollbar-thumb {
-            background: #555;
-            border-radius: 10px;
+        .movement-type.support {
+            background-color: rgba(68, 68, 255, 0.2);
+            color: #4444ff;
         }
 
-        #attackList::-webkit-scrollbar-thumb:hover {
-            background: #666;
+        .help-text {
+            color: #888;
+            font-size: 0.8em;
+            margin-top: 4px;
         }
+
+        .real-button {
+            background-color: #4CAF50;
+            color: #fff;
+            padding: 5px 10px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .real-button:hover {
+            background-color: #45a049;
+        }
+        
+        .glowing-border.attack {
+            box-shadow: 0 0 3px 1px #ff4444, 0 0 3px 1px #ff4444;
+        }
+
+        .glowing-border.support {
+            box-shadow: 0 0 3px 1px #4444ff, 0 0 3px 1px #4444ff;
+        }
+
+        .real-button, .delete-button {
+            min-height: 22px;  /* Makes both buttons the same height */
+            padding: 4px 0;
+            font-size: 12px;   /* Slightly smaller font to fit better */
+            width: 100%;
+        }
+
     </style>
     <script>
+        function toggleGlow(index) {
+            const movementListItems = document.querySelectorAll('#attackList li');
+            const movementItem = movementListItems[index];
+            movementItem.classList.toggle("glowing-border");
+        }
+
         function actualDistance(start, end) {
             var dy = start.y - end.y,
                 dx = start.x - end.x;
@@ -169,11 +264,13 @@
         }
 
         function parseVillageCoordinates(input) {
-            const [x, y] = input.split('|').map(Number);
-            if (isNaN(x) || isNaN(y)) {
-                throw new Error("Invalid village coordinates");
-            }
-            return { x, y };
+            return input.split(',').map(coord => {
+                const [x, y] = coord.trim().split('|').map(Number);
+                if (isNaN(x) || isNaN(y)) {
+                    throw new Error("Invalid village coordinates");
+                }
+                return { x, y };
+            });
         }
 
         function formatDateTime(date) {
@@ -188,80 +285,140 @@
             }).replace(',', '');
         }
 
-        function addAttack() {
-            const startVillage = parseVillageCoordinates(document.getElementById("startVillage").value);
-            const endVillage = parseVillageCoordinates(document.getElementById("endVillage").value);
+        function setCurrentDateTime() {
+            const now = new Date();
+            const localDateTime = now.toISOString().slice(0, 19);
+            document.getElementById("landingTime").value = localDateTime;
+        }
+
+        function addMovements(type) {
+            const startVillages = parseVillageCoordinates(document.getElementById("startVillage").value);
+            const endVillages = parseVillageCoordinates(document.getElementById("endVillage").value);
             const unitType = document.getElementById("unitType").value;
             const landingTime = new Date(document.getElementById("landingTime").value);
             const startLabel = document.getElementById("startLabel").value;
             const endLabel = document.getElementById("endLabel").value;
 
-            const distance = actualDistance(startVillage, endVillage);
-            const travelTime = calculateTravelTime(unitType, distance);
-            const launchTime = new Date(landingTime.getTime() - travelTime * 60000);
+            let newMovements = [];
 
-            const attack = {
-                startVillage,
-                endVillage,
-                unitType,
-                launchTime,
-                landingTime,
-                startLabel,
-                endLabel
-            };
+            // Create all combinations of start and end villages
+            for (let startVillage of startVillages) {
+                for (let endVillage of endVillages) {
+                    const distance = actualDistance(startVillage, endVillage);
+                    const travelTime = calculateTravelTime(unitType, distance);
+                    const launchTime = new Date(landingTime.getTime() - travelTime * 60000);
 
-            let attacks = JSON.parse(localStorage.getItem('attacks') || '[]');
-            attacks.push(attack);
-            attacks.sort((a, b) => new Date(a.launchTime) - new Date(b.launchTime));
-            localStorage.setItem('attacks', JSON.stringify(attacks));
+                    newMovements.push({
+                        startVillage,
+                        endVillage,
+                        unitType,
+                        launchTime,
+                        landingTime: new Date(landingTime),
+                        startLabel,
+                        endLabel,
+                        movementType: type
+                    });
+                }
+            }
 
-            updateAttackList();
+            let movements = JSON.parse(localStorage.getItem('movements') || '[]');
+            movements = [...movements, ...newMovements];
+            movements.sort((a, b) => new Date(a.launchTime) - new Date(b.launchTime));
+            localStorage.setItem('movements', JSON.stringify(movements));
+
+            updateMovementList();
         }
 
-        function updateAttackList() {
-            const attackList = document.getElementById("attackList");
-            attackList.innerHTML = '';
-
-            const attacks = JSON.parse(localStorage.getItem('attacks') || '[]');
-
-            attacks.forEach((attack, index) => {
-                const attackItem = document.createElement("li");
-
+        function updateMovementList() {
+            const movementList = document.getElementById("attackList");
+            movementList.innerHTML = '';
+        
+            const movements = JSON.parse(localStorage.getItem('movements') || '[]');
+        
+            movements.forEach((movement, index) => {
+                const movementItem = document.createElement("li");
+                movementItem.classList.add(movement.movementType.toLowerCase());
+        
+                // Unit icon container with larger size
+                const unitIconContainer = document.createElement("div");
+                unitIconContainer.style.cssText = "width: 80px;"; // Increased width
+        
                 const unitIcon = document.createElement("img");
-                unitIcon.src = `${attack.unitType.toLowerCase()}.png`;
+                unitIcon.src = `${movement.unitType.toLowerCase()}.png`;
                 unitIcon.classList.add("unit-icon");
-                unitIcon.alt = attack.unitType;
-
-                const attackInfo = document.createElement("div");
-                attackInfo.classList.add("attack-info");
-                attackInfo.innerHTML = `
-                    From <strong style="color: #3498db;">${attack.startLabel}</strong> (${attack.startVillage.x}|${attack.startVillage.y}) to <strong style="color: #3498db;">${attack.endLabel}</strong> (${attack.endVillage.x}|${attack.endVillage.y})<br>
-                    <span class="time">Launch: ${formatDateTime(new Date(attack.launchTime))}</span><br>
-                    Landing: ${formatDateTime(new Date(attack.landingTime))}<br>
-                    <span class="countdown" data-launch-time="${attack.launchTime}"></span>
+                unitIcon.alt = movement.unitType;
+        
+                const movementInfo = document.createElement("div");
+                movementInfo.classList.add("attack-info");
+                
+                const movementTypeSpan = `<span class="movement-type ${movement.movementType.toLowerCase()}">${movement.movementType}</span>`;
+                
+                movementInfo.innerHTML = `
+                    <div style="display: flex; flex-direction: column; width: 100%;">
+                        <div style="display: flex; align-items: center; justify-content: space-between;">
+                            <div style="flex: 1; display: flex; align-items: center; gap: 10px;">
+                                <strong style="color: #3498db;">${movement.startLabel}</strong>
+                                <span>(${movement.startVillage.x}|${movement.startVillage.y})</span>
+                            </div>
+                            
+                            ${movementTypeSpan}
+                            
+                            <div style="flex: 1; display: flex; align-items: center; gap: 10px; justify-content: flex-end;">
+                                <strong style="color: #3498db;">${movement.endLabel}</strong>
+                                <span>(${movement.endVillage.x}|${movement.endVillage.y})</span>
+                            </div>
+                        </div>
+                
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <span class="time">Launch: ${formatDateTime(new Date(movement.launchTime))}</span>
+                            <span>Landing: ${formatDateTime(new Date(movement.landingTime))}</span>
+                        </div>
+                
+                        <div style="text-align: center;" class="countdown" data-launch-time="${movement.launchTime}"></div>
+                    </div>
                 `;
-
+        
+                // Buttons container with larger size
+                const buttonContainer = document.createElement("div");
+                buttonContainer.style.cssText = `
+                    width: 80px;
+                    padding-left: 5px;
+                    display: flex;
+                    flex-direction: column;
+                    gap: 8px;
+                    justify-content: center;
+                `;
+        
+                const realButton = document.createElement("button");
+                realButton.className = "real-button";
+                realButton.textContent = "Real";
+                realButton.style.cssText = "width: 100%; padding: 8px 0; font-size: 14px;";
+                realButton.onclick = () => movementItem.classList.toggle("glowing-border");
+        
                 const deleteButton = document.createElement("button");
                 deleteButton.textContent = "Delete";
-                deleteButton.onclick = () => deleteAttack(index);
-                deleteButton.style.width = "auto";
-                deleteButton.style.padding = "5px 10px";
-                deleteButton.style.fontSize = "14px";
-
-                attackItem.appendChild(unitIcon);
-                attackItem.appendChild(attackInfo);
-                attackItem.appendChild(deleteButton);
-                attackList.appendChild(attackItem);
+                deleteButton.className = "delete-button";
+                deleteButton.style.cssText = "width: 100%; padding: 8px 0; font-size: 14px;";
+                deleteButton.onclick = () => deleteMovement(index);
+        
+                // Assemble the components
+                unitIconContainer.appendChild(unitIcon);
+                buttonContainer.appendChild(realButton);
+                buttonContainer.appendChild(deleteButton);
+                
+                movementItem.appendChild(unitIconContainer);
+                movementItem.appendChild(movementInfo);
+                movementItem.appendChild(buttonContainer);
+                movementList.appendChild(movementItem);
             });
-
+        
             updateCountdowns();
         }
-
-        function deleteAttack(index) {
-            let attacks = JSON.parse(localStorage.getItem('attacks') || '[]');
-            attacks.splice(index, 1);
-            localStorage.setItem('attacks', JSON.stringify(attacks));
-            updateAttackList();
+        function deleteMovement(index) {
+            let movements = JSON.parse(localStorage.getItem('movements') || '[]');
+            movements.splice(index, 1);
+            localStorage.setItem('movements', JSON.stringify(movements));
+            updateMovementList();
         }
 
         function updateCountdowns() {
@@ -278,17 +435,13 @@
                     const seconds = Math.floor((timeDiff % (1000 * 60)) / 1000);
                     element.textContent = `Countdown: ${hours}h ${minutes}m ${seconds}s`;
         
-                    // Calculate color based on time remaining
                     const totalMinutes = hours * 60 + minutes;
                     let color;
                     if (totalMinutes > 30) {
-                        // Light blue for over 30 minutes
                         color = '#87CEFA';
                     } else if (totalMinutes <= 5) {
-                        // Bright red for 5 minutes or less
                         color = '#FF0000';
                     } else {
-                        // Gradual change from light blue to dark red
                         const percentage = (30 - totalMinutes) / 25;
                         const r = Math.floor(135 + (220 - 135) * percentage);
                         const g = Math.floor(206 * (1 - percentage));
@@ -298,14 +451,15 @@
                     element.style.color = color;
                 } else {
                     element.textContent = 'Launch time passed';
-                    element.style.color = '#FF0000'; // Bright red when launch time has passed
+                    element.style.color = '#FF0000';
                 }
             });
         }
 
         window.onload = () => {
-            updateAttackList();
+            updateMovementList();
             setInterval(updateCountdowns, 1000);
+            setCurrentDateTime();
         };
     </script>
 </head>
@@ -315,16 +469,18 @@
         
         <div class="form-grid">
             <div class="form-group">
-                <label for="startVillage">Start Village (x|y):</label>
-                <input type="text" id="startVillage" placeholder="519|467">
+                <label for="startVillage">Start Village(s) (x|y):</label>
+                <input type="text" id="startVillage" placeholder="519|467, 520|468">
+                <div class="help-text">Multiple villages separated by commas</div>
             </div>
             <div class="form-group">
                 <label for="startLabel">Start Village Label:</label>
                 <input type="text" id="startLabel" placeholder="Start Village">
             </div>
             <div class="form-group">
-                <label for="endVillage">End Village (x|y):</label>
-                <input type="text" id="endVillage" placeholder="505|483">
+                <label for="endVillage">End Village(s) (x|y):</label>
+                <input type="text" id="endVillage" placeholder="505|483, 506|484">
+                <div class="help-text">Multiple villages separated by commas</div>
             </div>
             <div class="form-group">
                 <label for="endLabel">End Village Label:</label>
@@ -344,11 +500,17 @@
             </div>
             <div class="form-group">
                 <label for="landingTime">Landing Time:</label>
-                <input type="datetime-local" id="landingTime" step="1">
+                <div class="time-buttons">
+                    <input type="datetime-local" id="landingTime" step="1" style="flex: 3;">
+                    <button onclick="setCurrentDateTime()" class="time-button">Now</button>
+                </div>
             </div>
-        </div>
+        </div> 
 
-        <button onclick="addAttack()">Add Attack</button>
+        <div class="button-container">
+            <button class="attack-button" onclick="addMovements('ATTACK')">Add Attack</button>
+            <button class="support-button" onclick="addMovements('SUPPORT')">Add Support</button>
+        </div>
 
         <ul id="attackList"></ul>
     </div>
