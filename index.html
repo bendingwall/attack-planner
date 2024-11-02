@@ -231,8 +231,210 @@
             width: 100%;
         }
 
+               /* New styles for import/export */
+               .import-export-container {
+                display: flex;
+                gap: 10px;
+                margin-top: 20px;
+                margin-bottom: 20px;
+            }
+    
+            .export-button, .import-button {
+                background-color: #2c3e50;
+                color: white;
+                padding: 12px;
+                border: none;
+                border-radius: 8px;
+                cursor: pointer;
+                transition: background-color 0.3s;
+                flex: 1;
+            }
+    
+            .export-button:hover, .import-button:hover {
+                background-color: #34495e;
+            }
+    
+            .modal {
+                display: none;
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background-color: rgba(0, 0, 0, 0.7);
+                z-index: 1000;
+            }
+    
+            .modal-content {
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                background-color: #2d2d2d;
+                padding: 20px;
+                border-radius: 8px;
+                width: 80%;
+                max-width: 600px;
+            }
+    
+            .modal textarea {
+                width: 100%;
+                height: 200px;
+                margin: 10px 0;
+                padding: 10px;
+                background-color: #3d3d3d;
+                color: #e0e0e0;
+                border: 1px solid #555;
+                border-radius: 4px;
+                font-family: monospace;
+            }
+    
+            .modal-buttons {
+                display: flex;
+                gap: 10px;
+                justify-content: flex-end;
+            }
+    
+            .modal-button {
+                padding: 8px 16px;
+                border: none;
+                border-radius: 4px;
+                cursor: pointer;
+                transition: background-color 0.3s;
+            }
+    
+            .modal-button.primary {
+                background-color: #2ecc71;
+                color: white;
+            }
+    
+            .modal-button.secondary {
+                background-color: #7f8c8d;
+                color: white;
+            }
+    
+            .modal-button:hover {
+                opacity: 0.9;
+            }
+
+            .toggle-switch {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                margin-top: 10px;
+            }
+        
+            .switch {
+                position: relative;
+                display: inline-block;
+                width: 60px;
+                height: 34px;
+            }
+        
+            .switch input {
+                opacity: 0;
+                width: 0;
+                height: 0;
+            }
+        
+            .slider {
+                position: absolute;
+                cursor: pointer;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background-color: #7a1414;
+                transition: .4s;
+                border-radius: 34px;
+            }
+        
+            .slider:before {
+                position: absolute;
+                content: "";
+                height: 26px;
+                width: 26px;
+                left: 4px;
+                bottom: 4px;
+                background-color: white;
+                transition: .4s;
+                border-radius: 50%;
+            }
+        
+            input:checked + .slider {
+                background-color: #3a703b;
+            }
+        
+            input:checked + .slider:before {
+                transform: translateX(26px);
+            }
+        
+            .notification-label {
+                color: #e0e0e0;
+                font-weight: 600;
+            }
+
     </style>
     <script>
+        
+        const WEBHOOKS = {
+            'AXE': 'https://discord.com/' + 'api/webhooks/1302073559123759145/aAsDjmbi3HJ0R8NZPshJuKpWdWOg7ePa7BjkuZZec6So7MWZkJc-nznjXHtZQeh_rAV7',
+            'HC': 'https://discord.com/' + 'api/webhooks/1302073731178434600/PL5o3FUEUGjTnjnp45XDv5HilnDnxGEFcky_-5joBSiphLjS9hhCK03XBQAR_YzMaBK5',
+            'LC': 'https://discord.com/' + 'api/webhooks/1302073781451362346/YWzk4ZPDUQ5rxlRRAWoc2RFxLrdroQG9tMYN8tkNr-vaimkBL2LQURKffrERitQXEwqt',
+            'NOBLE': 'https://discord.com/' + 'api/webhooks/1302073816608145428/1jaQ5_9o0vh0XEIUHWrU8HERxv7NHg0tdwL0XdgcBTnMLzTONsnGp-V0zLA7tIejq-L7',
+            'RAM': 'https://discord.com/' + 'api/webhooks/1302073824434454551/rxP5qr0GnJUHj-ioXpZX2MmSvDGf5cn5lU_1SA6a3EJzUERpq09kxYjgfaT5Tf45EPeI',
+            'SWORD': 'https://discord.com/' + 'api/webhooks/1302073929615147059/NKJDifLvVhkizxRVlpWEikd-edX-T_oqe4E4MCTh3M2qmR1v5vMmZkTgTe7HnVXeOn4c',
+            'TREB': 'https://discord.com' + '/api/webhooks/1302073978361348158/lq-QjPBBjNdgUmS1tHpyxryEgWWTNzYhWcvpvmdD_X2kDo8cEpR9xEAPW35voO2MwuoU'
+        };
+
+        const notifiedMovements = new Set();
+
+        const ROLE_ID = '130207443820386726' + '9';
+
+        function isNotificationsEnabled() {
+            return document.getElementById('notificationToggle').checked;
+        }
+    
+        // Save toggle state to localStorage
+        function saveNotificationState() {
+            localStorage.setItem('notificationsEnabled', isNotificationsEnabled());
+        }
+    
+        // Load toggle state from localStorage
+        function loadNotificationState() {
+            const enabled = localStorage.getItem('notificationsEnabled');
+            if (enabled !== null) {
+                document.getElementById('notificationToggle').checked = enabled === 'true';
+            }
+        }
+
+    // Modify your existing sendWebhookNotification function
+    async function sendWebhookNotification(movement, index) {
+        if (!isNotificationsEnabled()) return; // Don't send if notifications are disabled
+
+        const webhook = WEBHOOKS[movement.unitType];
+        if (!webhook) return;
+
+        const startCoords = `(${movement.startVillage.x}|${movement.startVillage.y})`;
+        const endCoords = `(${movement.endVillage.x}|${movement.endVillage.y})`;
+        
+        const message = {
+            content: `<@&${ROLE_ID}> **${movement.startLabel || 'A' + (index + 1)}** ${startCoords} • **${movement.movementType}** • **${movement.endLabel || 'Target'}** ${endCoords}`,
+        };
+
+        try {
+            await fetch(webhook, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(message)
+            });
+        } catch (error) {
+            console.error('Failed to send webhook notification:', error);
+        }
+    }
+
         function toggleGlow(index) {
             let movements = JSON.parse(localStorage.getItem('movements') || '[]');
             // Toggle the isReal property
@@ -340,11 +542,14 @@
             updateMovementList();
         }
 
+        // Modify the updateCountdowns function to include notification logic
         function updateCountdowns() {
             const countdownElements = document.querySelectorAll('.countdown');
             const nowUTC = new Date(Date.now());
             
-            countdownElements.forEach(element => {
+            const movements = JSON.parse(localStorage.getItem('movements') || '[]');
+            
+            countdownElements.forEach((element, index) => {
                 const launchTime = new Date(element.dataset.launchTime);
                 const timeDiff = launchTime - nowUTC;
                 
@@ -353,6 +558,16 @@
                     const minutes = Math.floor((timeDiff % (1000 * 60 * 60)) / (1000 * 60));
                     const seconds = Math.floor((timeDiff % (1000 * 60)) / 1000);
                     element.textContent = `Countdown: ${hours}h ${minutes}m ${seconds}s`;
+                    
+                    // Check if we should send a notification (1 minute before launch)
+                    const totalSeconds = hours * 3600 + minutes * 60 + seconds;
+                    if (totalSeconds <= 60 && totalSeconds > 55) { // 5-second window to avoid duplicate notifications
+                        const movementKey = `${movements[index].launchTime}-${movements[index].startVillage.x}|${movements[index].startVillage.y}`;
+                        if (!notifiedMovements.has(movementKey)) {
+                            sendWebhookNotification(movements[index], index);
+                            notifiedMovements.add(movementKey);
+                        }
+                    }
                     
                     const totalMinutes = hours * 60 + minutes;
                     let color;
@@ -470,16 +685,106 @@
             updateCountdowns();
         }
 
+    // Add to your window.onload function
         window.onload = () => {
             updateMovementList();
             setInterval(updateCountdowns, 1000);
             setCurrentDateTime();
+            loadNotificationState();
+            
+            // Add event listener for toggle changes
+            document.getElementById('notificationToggle').addEventListener('change', saveNotificationState);
+        };
+
+        
+        function exportAttacks() {
+            const movements = JSON.parse(localStorage.getItem('movements') || '[]');
+            const exportData = JSON.stringify(movements, null, 2);
+            
+            const modal = document.getElementById('exportModal');
+            const textarea = document.getElementById('exportText');
+            textarea.value = exportData;
+            modal.style.display = 'block';
+        }
+
+        function copyExport() {
+            const textarea = document.getElementById('exportText');
+            textarea.select();
+            document.execCommand('copy');
+            
+            const copyButton = document.getElementById('copyButton');
+            const originalText = copyButton.textContent;
+            copyButton.textContent = 'Copied!';
+            setTimeout(() => {
+                copyButton.textContent = originalText;
+            }, 2000);
+        }
+
+        function importAttacks() {
+            const modal = document.getElementById('importModal');
+            modal.style.display = 'block';
+        }
+
+        function processImport() {
+            const textarea = document.getElementById('importText');
+            try {
+                const importedData = JSON.parse(textarea.value);
+                
+                // Validate the imported data structure
+                if (!Array.isArray(importedData)) {
+                    throw new Error('Invalid import format');
+                }
+                
+                // Verify required fields exist in each movement
+                importedData.forEach(movement => {
+                    if (!movement.startVillage || !movement.endVillage || 
+                        !movement.unitType || !movement.launchTime || 
+                        !movement.landingTime || !movement.movementType) {
+                        throw new Error('Invalid movement data structure');
+                    }
+                });
+                
+                // Merge with existing movements
+                let existingMovements = JSON.parse(localStorage.getItem('movements') || '[]');
+                const mergedMovements = [...existingMovements, ...importedData];
+                
+                // Sort by launch time
+                mergedMovements.sort((a, b) => new Date(a.launchTime) - new Date(b.launchTime));
+                
+                // Save and update
+                localStorage.setItem('movements', JSON.stringify(mergedMovements));
+                updateMovementList();
+                
+                closeModal('importModal');
+                document.getElementById('importText').value = '';
+            } catch (error) {
+                alert('Invalid import data. Please check the format and try again.');
+            }
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+        }
+
+        // Add this to your window.onload
+        window.onclick = function(event) {
+            if (event.target.classList.contains('modal')) {
+                event.target.style.display = 'none';
+            }
         };
     </script>
 </head>
 <body>
     <div class="container">
         <h1>Tribal Wars 2 Attack Planner</h1>
+
+        <div class="toggle-switch">
+            <label class="notification-label">Discord Notifications:</label>
+            <label class="switch">
+                <input type="checkbox" id="notificationToggle" checked>
+                <span class="slider"></span>
+            </label>
+        </div>
         
         <div class="form-grid">
             <div class="form-group">
@@ -527,6 +832,41 @@
         </div>
 
         <ul id="attackList"></ul>
+
+                <!-- Add Import/Export buttons after the Add Attack/Support buttons -->
+                <div class="import-export-container">
+                    <button class="export-button" onclick="exportAttacks()">Export Attacks</button>
+                    <button class="import-button" onclick="importAttacks()">Import Attacks</button>
+                </div>
+        
+                <ul id="attackList"></ul>
+            </div>
+        
+            <!-- Export Modal -->
+            <div id="exportModal" class="modal">
+                <div class="modal-content">
+                    <h2>Export Attacks</h2>
+                    <p>Copy the text below to share your attacks:</p>
+                    <textarea id="exportText" readonly></textarea>
+                    <div class="modal-buttons">
+                        <button id="copyButton" class="modal-button primary" onclick="copyExport()">Copy to Clipboard</button>
+                        <button class="modal-button secondary" onclick="closeModal('exportModal')">Close</button>
+                    </div>
+                </div>
+            </div>
+        
+            <!-- Import Modal -->
+            <div id="importModal" class="modal">
+                <div class="modal-content">
+                    <h2>Import Attacks</h2>
+                    <p>Paste the exported attack data below:</p>
+                    <textarea id="importText" placeholder="Paste attack data here..."></textarea>
+                    <div class="modal-buttons">
+                        <button class="modal-button primary" onclick="processImport()">Import</button>
+                        <button class="modal-button secondary" onclick="closeModal('importModal')">Cancel</button>
+                    </div>
+                </div>
+            </div>
     </div>
 </body>
 </html>
