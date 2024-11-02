@@ -317,8 +317,130 @@
                 opacity: 0.9;
             }
 
+            .toggle-switch {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                margin-top: 10px;
+            }
+        
+            .switch {
+                position: relative;
+                display: inline-block;
+                width: 60px;
+                height: 34px;
+            }
+        
+            .switch input {
+                opacity: 0;
+                width: 0;
+                height: 0;
+            }
+        
+            .slider {
+                position: absolute;
+                cursor: pointer;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background-color: #7a1414;
+                transition: .4s;
+                border-radius: 34px;
+            }
+        
+            .slider:before {
+                position: absolute;
+                content: "";
+                height: 26px;
+                width: 26px;
+                left: 4px;
+                bottom: 4px;
+                background-color: white;
+                transition: .4s;
+                border-radius: 50%;
+            }
+        
+            input:checked + .slider {
+                background-color: #3a703b;
+            }
+        
+            input:checked + .slider:before {
+                transform: translateX(26px);
+            }
+        
+            .notification-label {
+                color: #e0e0e0;
+                font-weight: 600;
+            }
+
     </style>
     <script>
+        const _0x5f3a = {
+            'key': _0x2f4e('aHR0cHM6Ly9kaXNjb3JkLmNvbS9hcGkvd2ViaG9va3Mv'),
+            'ids': {
+                'AXE': _0x2f4e('MTMwMjA3MzU1OTEyMzc1OTE0NS9hQXNEam1iaTNISjBSOE5aUHNoSnVLcFdkV09nN2VQYTdCamt1WlplYzZTbzdNV1prSmMtbnpuakhIdFpRZWhfckFWNw=='),
+                'HC': _0x2f4e('MTMwMjA3MzczMTE3ODQzNDYwMC9QTDVvM0ZVRVVHZ1Ruam5wNDVYRHY1SGlsRG5EbkdFRmNreV8tNWpvQlNpcGhMalM5aGhLSzAzWEJRQVJfWXpNYUJLNQ=='),
+                'LC': _0x2f4e('MTMwMjA3Mzc4MTQ1MTM2MjM0Ni9ZV3prNFpQRFVRNXJ4bFJSQVdvYzJSRnhMcmRyb1FHOXRNWU44dGtuci12YWltQkwyTFFVUktmZnJFUml0UVhFd3F0'),
+                'NOBLE': _0x2f4e('MTMwMjA3MzgxNjYwODE0NTQyOC8xamFRNV85bzB2aDBYRUlVSFdyVThIRVJ2N05IZzB0ZFdMMGRnY0JUbk1Melk3MU5zbk1scC1WMHpMQTdUSWVqcS1MNw=='),
+                'RAM': _0x2f4e('MTMwMjA3MzgyNDQzNDQ1NDU1MS9yeFBNcXIwR25KVWhqLWlvWHBaWDJNbVN2REdmNWNuNWxVXzFTQTZhM0VKelVFUnBxMDlreFlqZ2ZhVDVUZjQ1RVBlSQ=='),
+                'SWORD': _0x2f4e('MTMwMjA3MzkyOTYxNTE0NzA1OS9OS0pEaWZMdlZoa2l6eFJWbHBXRWlrZC1lZFgtVF9vcUU0RTRNVENiM00ycVZSMXY1dk1ta1RnVGU3SG5WWGVPT3hj'),
+                'TREB': _0x2f4e('MTMwMjA3Mzk3ODM2MTM0ODE1OC9scS1RalBCQmpOZGdVbVMxdEhweXhyeUVnV1dUTnpZaFdjdnB2bWREX1gyZG84Y0VwUjlreEVBUFczNXZvTzJNd3VvVQ==')
+            }
+        };
+
+        const notifiedMovements = new Set();
+        
+
+        const ROLE_ID = _0x2f4e('MTMwMjA3NDQzODIwMzg2NzI2OQ==');
+
+        function getWebhookURL(unitType) {
+            const id = _0x5f3a.ids[unitType];
+            return id ? _0x5f3a.key + id : null;
+        }
+        
+
+        function isNotificationsEnabled() {
+            return document.getElementById('notificationToggle').checked;
+        }
+    
+        // Save toggle state to localStorage
+        function saveNotificationState() {
+            localStorage.setItem('notificationsEnabled', isNotificationsEnabled());
+        }
+    
+        // Load toggle state from localStorage
+        function loadNotificationState() {
+            const enabled = localStorage.getItem('notificationsEnabled');
+            if (enabled !== null) {
+                document.getElementById('notificationToggle').checked = enabled === 'true';
+            }
+        }
+
+        async function sendWebhookNotification(movement, index) {
+            const webhook = getWebhookURL(movement.unitType);
+            if (!webhook) return;
+        
+            const startCoords = `(${movement.startVillage.x}|${movement.startVillage.y})`;
+            const endCoords = `(${movement.endVillage.x}|${movement.endVillage.y})`;
+            
+            const message = {
+                content: `<@&${ROLE_ID}> **${movement.startLabel || 'A' + (index + 1)}** ${startCoords} • **${movement.movementType}** • **${movement.endLabel || 'Target'}** ${endCoords}`,
+            };
+        
+            try {
+                await fetch(webhook, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(message)
+                });
+            } catch (error) {
+                console.error('Failed to send webhook notification:', error);
+            }
+        }
+
         function toggleGlow(index) {
             let movements = JSON.parse(localStorage.getItem('movements') || '[]');
             // Toggle the isReal property
@@ -426,11 +548,14 @@
             updateMovementList();
         }
 
+        // Modify the updateCountdowns function to include notification logic
         function updateCountdowns() {
             const countdownElements = document.querySelectorAll('.countdown');
             const nowUTC = new Date(Date.now());
             
-            countdownElements.forEach(element => {
+            const movements = JSON.parse(localStorage.getItem('movements') || '[]');
+            
+            countdownElements.forEach((element, index) => {
                 const launchTime = new Date(element.dataset.launchTime);
                 const timeDiff = launchTime - nowUTC;
                 
@@ -439,6 +564,16 @@
                     const minutes = Math.floor((timeDiff % (1000 * 60 * 60)) / (1000 * 60));
                     const seconds = Math.floor((timeDiff % (1000 * 60)) / 1000);
                     element.textContent = `Countdown: ${hours}h ${minutes}m ${seconds}s`;
+                    
+                    // Check if we should send a notification (1 minute before launch)
+                    const totalSeconds = hours * 3600 + minutes * 60 + seconds;
+                    if (totalSeconds <= 60 && totalSeconds > 55) { // 5-second window to avoid duplicate notifications
+                        const movementKey = `${movements[index].launchTime}-${movements[index].startVillage.x}|${movements[index].startVillage.y}`;
+                        if (!notifiedMovements.has(movementKey)) {
+                            sendWebhookNotification(movements[index], index);
+                            notifiedMovements.add(movementKey);
+                        }
+                    }
                     
                     const totalMinutes = hours * 60 + minutes;
                     let color;
@@ -556,10 +691,15 @@
             updateCountdowns();
         }
 
+    // Add to your window.onload function
         window.onload = () => {
             updateMovementList();
             setInterval(updateCountdowns, 1000);
             setCurrentDateTime();
+            loadNotificationState();
+            
+            // Add event listener for toggle changes
+            document.getElementById('notificationToggle').addEventListener('change', saveNotificationState);
         };
 
         
@@ -643,6 +783,14 @@
 <body>
     <div class="container">
         <h1>Tribal Wars 2 Attack Planner</h1>
+
+        <div class="toggle-switch">
+            <label class="notification-label">Discord Notifications:</label>
+            <label class="switch">
+                <input type="checkbox" id="notificationToggle" checked>
+                <span class="slider"></span>
+            </label>
+        </div>
         
         <div class="form-grid">
             <div class="form-group">
