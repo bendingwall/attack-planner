@@ -231,216 +231,8 @@
             width: 100%;
         }
 
-               /* New styles for import/export */
-               .import-export-container {
-                display: flex;
-                gap: 10px;
-                margin-top: 20px;
-                margin-bottom: 20px;
-            }
-    
-            .export-button, .import-button {
-                background-color: #2c3e50;
-                color: white;
-                padding: 12px;
-                border: none;
-                border-radius: 8px;
-                cursor: pointer;
-                transition: background-color 0.3s;
-                flex: 1;
-            }
-    
-            .export-button:hover, .import-button:hover {
-                background-color: #34495e;
-            }
-    
-            .modal {
-                display: none;
-                position: fixed;
-                top: 0;
-                left: 0;
-                width: 100%;
-                height: 100%;
-                background-color: rgba(0, 0, 0, 0.7);
-                z-index: 1000;
-            }
-    
-            .modal-content {
-                position: absolute;
-                top: 50%;
-                left: 50%;
-                transform: translate(-50%, -50%);
-                background-color: #2d2d2d;
-                padding: 20px;
-                border-radius: 8px;
-                width: 80%;
-                max-width: 600px;
-            }
-    
-            .modal textarea {
-                width: 100%;
-                height: 200px;
-                margin: 10px 0;
-                padding: 10px;
-                background-color: #3d3d3d;
-                color: #e0e0e0;
-                border: 1px solid #555;
-                border-radius: 4px;
-                font-family: monospace;
-            }
-    
-            .modal-buttons {
-                display: flex;
-                gap: 10px;
-                justify-content: flex-end;
-            }
-    
-            .modal-button {
-                padding: 8px 16px;
-                border: none;
-                border-radius: 4px;
-                cursor: pointer;
-                transition: background-color 0.3s;
-            }
-    
-            .modal-button.primary {
-                background-color: #2ecc71;
-                color: white;
-            }
-    
-            .modal-button.secondary {
-                background-color: #7f8c8d;
-                color: white;
-            }
-    
-            .modal-button:hover {
-                opacity: 0.9;
-            }
-
-            .toggle-switch {
-                display: flex;
-                align-items: center;
-                gap: 10px;
-                margin-top: 10px;
-            }
-        
-            .switch {
-                position: relative;
-                display: inline-block;
-                width: 60px;
-                height: 34px;
-            }
-        
-            .switch input {
-                opacity: 0;
-                width: 0;
-                height: 0;
-            }
-        
-            .slider {
-                position: absolute;
-                cursor: pointer;
-                top: 0;
-                left: 0;
-                right: 0;
-                bottom: 0;
-                background-color: #7a1414;
-                transition: .4s;
-                border-radius: 34px;
-            }
-        
-            .slider:before {
-                position: absolute;
-                content: "";
-                height: 26px;
-                width: 26px;
-                left: 4px;
-                bottom: 4px;
-                background-color: white;
-                transition: .4s;
-                border-radius: 50%;
-            }
-        
-            input:checked + .slider {
-                background-color: #3a703b;
-            }
-        
-            input:checked + .slider:before {
-                transform: translateX(26px);
-            }
-        
-            .notification-label {
-                color: #e0e0e0;
-                font-weight: 600;
-            }
-
     </style>
     <script>
-        const _0x5f3a = {
-            'key': _0x2f4e('aHR0cHM6Ly9kaXNjb3JkLmNvbS9hcGkvd2ViaG9va3Mv'),
-            'ids': {
-                'AXE': _0x2f4e('MTMwMjA3MzU1OTEyMzc1OTE0NS9hQXNEam1iaTNISjBSOE5aUHNoSnVLcFdkV09nN2VQYTdCamt1WlplYzZTbzdNV1prSmMtbnpuakhIdFpRZWhfckFWNw=='),
-                'HC': _0x2f4e('MTMwMjA3MzczMTE3ODQzNDYwMC9QTDVvM0ZVRVVHZ1Ruam5wNDVYRHY1SGlsRG5EbkdFRmNreV8tNWpvQlNpcGhMalM5aGhLSzAzWEJRQVJfWXpNYUJLNQ=='),
-                'LC': _0x2f4e('MTMwMjA3Mzc4MTQ1MTM2MjM0Ni9ZV3prNFpQRFVRNXJ4bFJSQVdvYzJSRnhMcmRyb1FHOXRNWU44dGtuci12YWltQkwyTFFVUktmZnJFUml0UVhFd3F0'),
-                'NOBLE': _0x2f4e('MTMwMjA3MzgxNjYwODE0NTQyOC8xamFRNV85bzB2aDBYRUlVSFdyVThIRVJ2N05IZzB0ZFdMMGRnY0JUbk1Melk3MU5zbk1scC1WMHpMQTdUSWVqcS1MNw=='),
-                'RAM': _0x2f4e('MTMwMjA3MzgyNDQzNDQ1NDU1MS9yeFBNcXIwR25KVWhqLWlvWHBaWDJNbVN2REdmNWNuNWxVXzFTQTZhM0VKelVFUnBxMDlreFlqZ2ZhVDVUZjQ1RVBlSQ=='),
-                'SWORD': _0x2f4e('MTMwMjA3MzkyOTYxNTE0NzA1OS9OS0pEaWZMdlZoa2l6eFJWbHBXRWlrZC1lZFgtVF9vcUU0RTRNVENiM00ycVZSMXY1dk1ta1RnVGU3SG5WWGVPT3hj'),
-                'TREB': _0x2f4e('MTMwMjA3Mzk3ODM2MTM0ODE1OC9scS1RalBCQmpOZGdVbVMxdEhweXhyeUVnV1dUTnpZaFdjdnB2bWREX1gyZG84Y0VwUjlreEVBUFczNXZvTzJNd3VvVQ==')
-            }
-        };
-
-        const notifiedMovements = new Set();
-        
-
-        const ROLE_ID = _0x2f4e('MTMwMjA3NDQzODIwMzg2NzI2OQ==');
-
-        function getWebhookURL(unitType) {
-            const id = _0x5f3a.ids[unitType];
-            return id ? _0x5f3a.key + id : null;
-        }
-        
-
-        function isNotificationsEnabled() {
-            return document.getElementById('notificationToggle').checked;
-        }
-    
-        // Save toggle state to localStorage
-        function saveNotificationState() {
-            localStorage.setItem('notificationsEnabled', isNotificationsEnabled());
-        }
-    
-        // Load toggle state from localStorage
-        function loadNotificationState() {
-            const enabled = localStorage.getItem('notificationsEnabled');
-            if (enabled !== null) {
-                document.getElementById('notificationToggle').checked = enabled === 'true';
-            }
-        }
-
-        async function sendWebhookNotification(movement, index) {
-            const webhook = getWebhookURL(movement.unitType);
-            if (!webhook) return;
-        
-            const startCoords = `(${movement.startVillage.x}|${movement.startVillage.y})`;
-            const endCoords = `(${movement.endVillage.x}|${movement.endVillage.y})`;
-            
-            const message = {
-                content: `<@&${ROLE_ID}> **${movement.startLabel || 'A' + (index + 1)}** ${startCoords} • **${movement.movementType}** • **${movement.endLabel || 'Target'}** ${endCoords}`,
-            };
-        
-            try {
-                await fetch(webhook, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(message)
-                });
-            } catch (error) {
-                console.error('Failed to send webhook notification:', error);
-            }
-        }
-
         function toggleGlow(index) {
             let movements = JSON.parse(localStorage.getItem('movements') || '[]');
             // Toggle the isReal property
@@ -548,14 +340,11 @@
             updateMovementList();
         }
 
-        // Modify the updateCountdowns function to include notification logic
         function updateCountdowns() {
             const countdownElements = document.querySelectorAll('.countdown');
             const nowUTC = new Date(Date.now());
             
-            const movements = JSON.parse(localStorage.getItem('movements') || '[]');
-            
-            countdownElements.forEach((element, index) => {
+            countdownElements.forEach(element => {
                 const launchTime = new Date(element.dataset.launchTime);
                 const timeDiff = launchTime - nowUTC;
                 
@@ -564,16 +353,6 @@
                     const minutes = Math.floor((timeDiff % (1000 * 60 * 60)) / (1000 * 60));
                     const seconds = Math.floor((timeDiff % (1000 * 60)) / 1000);
                     element.textContent = `Countdown: ${hours}h ${minutes}m ${seconds}s`;
-                    
-                    // Check if we should send a notification (1 minute before launch)
-                    const totalSeconds = hours * 3600 + minutes * 60 + seconds;
-                    if (totalSeconds <= 60 && totalSeconds > 55) { // 5-second window to avoid duplicate notifications
-                        const movementKey = `${movements[index].launchTime}-${movements[index].startVillage.x}|${movements[index].startVillage.y}`;
-                        if (!notifiedMovements.has(movementKey)) {
-                            sendWebhookNotification(movements[index], index);
-                            notifiedMovements.add(movementKey);
-                        }
-                    }
                     
                     const totalMinutes = hours * 60 + minutes;
                     let color;
@@ -691,106 +470,16 @@
             updateCountdowns();
         }
 
-    // Add to your window.onload function
         window.onload = () => {
             updateMovementList();
             setInterval(updateCountdowns, 1000);
             setCurrentDateTime();
-            loadNotificationState();
-            
-            // Add event listener for toggle changes
-            document.getElementById('notificationToggle').addEventListener('change', saveNotificationState);
-        };
-
-        
-        function exportAttacks() {
-            const movements = JSON.parse(localStorage.getItem('movements') || '[]');
-            const exportData = JSON.stringify(movements, null, 2);
-            
-            const modal = document.getElementById('exportModal');
-            const textarea = document.getElementById('exportText');
-            textarea.value = exportData;
-            modal.style.display = 'block';
-        }
-
-        function copyExport() {
-            const textarea = document.getElementById('exportText');
-            textarea.select();
-            document.execCommand('copy');
-            
-            const copyButton = document.getElementById('copyButton');
-            const originalText = copyButton.textContent;
-            copyButton.textContent = 'Copied!';
-            setTimeout(() => {
-                copyButton.textContent = originalText;
-            }, 2000);
-        }
-
-        function importAttacks() {
-            const modal = document.getElementById('importModal');
-            modal.style.display = 'block';
-        }
-
-        function processImport() {
-            const textarea = document.getElementById('importText');
-            try {
-                const importedData = JSON.parse(textarea.value);
-                
-                // Validate the imported data structure
-                if (!Array.isArray(importedData)) {
-                    throw new Error('Invalid import format');
-                }
-                
-                // Verify required fields exist in each movement
-                importedData.forEach(movement => {
-                    if (!movement.startVillage || !movement.endVillage || 
-                        !movement.unitType || !movement.launchTime || 
-                        !movement.landingTime || !movement.movementType) {
-                        throw new Error('Invalid movement data structure');
-                    }
-                });
-                
-                // Merge with existing movements
-                let existingMovements = JSON.parse(localStorage.getItem('movements') || '[]');
-                const mergedMovements = [...existingMovements, ...importedData];
-                
-                // Sort by launch time
-                mergedMovements.sort((a, b) => new Date(a.launchTime) - new Date(b.launchTime));
-                
-                // Save and update
-                localStorage.setItem('movements', JSON.stringify(mergedMovements));
-                updateMovementList();
-                
-                closeModal('importModal');
-                document.getElementById('importText').value = '';
-            } catch (error) {
-                alert('Invalid import data. Please check the format and try again.');
-            }
-        }
-
-        function closeModal(modalId) {
-            document.getElementById(modalId).style.display = 'none';
-        }
-
-        // Add this to your window.onload
-        window.onclick = function(event) {
-            if (event.target.classList.contains('modal')) {
-                event.target.style.display = 'none';
-            }
         };
     </script>
 </head>
 <body>
     <div class="container">
         <h1>Tribal Wars 2 Attack Planner</h1>
-
-        <div class="toggle-switch">
-            <label class="notification-label">Discord Notifications:</label>
-            <label class="switch">
-                <input type="checkbox" id="notificationToggle" checked>
-                <span class="slider"></span>
-            </label>
-        </div>
         
         <div class="form-grid">
             <div class="form-group">
@@ -838,41 +527,6 @@
         </div>
 
         <ul id="attackList"></ul>
-
-                <!-- Add Import/Export buttons after the Add Attack/Support buttons -->
-                <div class="import-export-container">
-                    <button class="export-button" onclick="exportAttacks()">Export Attacks</button>
-                    <button class="import-button" onclick="importAttacks()">Import Attacks</button>
-                </div>
-        
-                <ul id="attackList"></ul>
-            </div>
-        
-            <!-- Export Modal -->
-            <div id="exportModal" class="modal">
-                <div class="modal-content">
-                    <h2>Export Attacks</h2>
-                    <p>Copy the text below to share your attacks:</p>
-                    <textarea id="exportText" readonly></textarea>
-                    <div class="modal-buttons">
-                        <button id="copyButton" class="modal-button primary" onclick="copyExport()">Copy to Clipboard</button>
-                        <button class="modal-button secondary" onclick="closeModal('exportModal')">Close</button>
-                    </div>
-                </div>
-            </div>
-        
-            <!-- Import Modal -->
-            <div id="importModal" class="modal">
-                <div class="modal-content">
-                    <h2>Import Attacks</h2>
-                    <p>Paste the exported attack data below:</p>
-                    <textarea id="importText" placeholder="Paste attack data here..."></textarea>
-                    <div class="modal-buttons">
-                        <button class="modal-button primary" onclick="processImport()">Import</button>
-                        <button class="modal-button secondary" onclick="closeModal('importModal')">Cancel</button>
-                    </div>
-                </div>
-            </div>
     </div>
 </body>
 </html>
